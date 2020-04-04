@@ -16,11 +16,14 @@ SOURCES=main.c mgmtmode.c
 MAKE_EXPORTS=mod_mgmtmode
 
 MODULE=mod_mgmtmode
+MODULE_STUB=mod_mgmtmode.lua
 
 ######################################
 
 include $(TOPDIR)/build/rules.mk
 
 ######################################
+
+main.o: exports.h
 
 _install: module_install
