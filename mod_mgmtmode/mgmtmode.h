@@ -10,6 +10,7 @@
 #define ION_MOD_MGMTMODE_MGMTMODE_H
 
 #include <ioncore/common.h>
+#include <ioncore/log.h>
 #include <libextl/extl.h>
 
 INTRCLASS(WMgmtMode);
