@@ -149,6 +149,7 @@ static void mgmtmode_erase(WMgmtMode *mode)
 
 static bool mgmt_handler(WRegion *reg, XEvent *xev)
 {
+    WRegion *mreg=NULL, *sub=NULL, *chld=NULL;
     XKeyEvent *ev=&xev->xkey;
     WBinding *binding=NULL;
     WMgmtMode *mode;
@@ -173,7 +174,17 @@ static bool mgmt_handler(WRegion *reg, XEvent *xev)
 
     if(binding!=NULL){
         mgmtmode_erase(mode);
-        extl_call(binding->func, "o", NULL, mode);
+
+        sub = (WRegion*) mode->selw.obj;
+        mreg = sub;
+        do{
+            chld = mreg;
+            if (chld!=NULL)
+                LOG(INFO, GENERAL, "Loop at %s.", chld->ni.name);
+            mreg=region_current(mreg);
+        }while(mreg!=NULL);
+
+        extl_call(binding->func, "ooo", NULL, mode, sub, chld);
         if(mgmt_mode!=NULL)
             mgmtmode_draw(mgmt_mode);
     }
