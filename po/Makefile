@@ -24,7 +24,7 @@ POTDIRS=../ioncore \
 	../mod_sm \
 	../mod_sp \
 	../mod_statusbar \
-	../mod_mgmtmode \
+	../mod_modal \
 	../de \
 	../notion \
 	../etc \

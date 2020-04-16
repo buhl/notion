@@ -1,5 +1,5 @@
 /*
- * ion/mod_mgmtmode/mgmtmode.c
+ * ion/mod_modal/modal.c
  *
  * Copyright (c) Tuomo Valkonen 2004-2007.
  *
@@ -18,20 +18,20 @@
 #include <ioncore/rootwin.h>
 #include <ioncore/binding.h>
 #include <ioncore/grab.h>
-#include "mgmtmode.h"
+#include "modal.h"
 #include "main.h"
 
 
-static WMgmtMode *mgmt_mode=NULL;
+static WModal *modal_mode=NULL;
 
 
-static void cancel_mgmt(WRegion *reg);
+static void cancel_modal(WRegion *reg);
 
 
-/*{{{ WMgmtMode */
+/*{{{ WModal */
 
 
-static bool mgmtmode_init(WMgmtMode *mode, WRegion *reg)
+static bool modal_init(WModal *mode, WRegion *reg)
 {
     watch_init(&(mode->selw));
     watch_setup(&(mode->selw), (Obj*)reg, NULL);
@@ -39,16 +39,16 @@ static bool mgmtmode_init(WMgmtMode *mode, WRegion *reg)
 }
 
 
-static WMgmtMode *create_mgmtmode(WRegion *reg)
+static WModal *create_modal(WRegion *reg)
 {
-    CREATEOBJ_IMPL(WMgmtMode, mgmtmode, (p, reg));
+    CREATEOBJ_IMPL(WModal, modal, (p, reg));
 }
 
 
-static void mgmtmode_deinit(WMgmtMode *mode)
+static void modal_deinit(WModal *mode)
 {
-    if(mgmt_mode==mode)
-       mgmt_mode=NULL;
+    if(modal_mode==mode)
+       modal_mode=NULL;
 
     watch_reset(&(mode->selw));
 }
@@ -58,7 +58,7 @@ static void mgmtmode_deinit(WMgmtMode *mode)
  * Select management mode target.
  */
 EXTL_EXPORT_MEMBER
-void mgmtmode_select(WMgmtMode *mode, WRegion *reg)
+void modal_select(WModal *mode, WRegion *reg)
 {
     watch_setup(&(mode->selw), (Obj*)reg, NULL);
 }
@@ -69,7 +69,7 @@ void mgmtmode_select(WMgmtMode *mode, WRegion *reg)
  */
 EXTL_SAFE
 EXTL_EXPORT_MEMBER
-WRegion *mgmtmode_selected(WMgmtMode *mode)
+WRegion *modal_selected(WModal *mode)
 {
     return (WRegion*)(mode->selw.obj);
 }
@@ -79,15 +79,15 @@ WRegion *mgmtmode_selected(WMgmtMode *mode)
  * End management mode.
  */
 EXTL_EXPORT_MEMBER
-void mgmtmode_finish(WMgmtMode *mode)
+void modal_finish(WModal *mode)
 {
-    if(mgmt_mode==mode)
-        cancel_mgmt(NULL);
+    if(modal_mode==mode)
+        cancel_modal(NULL);
 }
 
 
 EXTL_EXPORT
-IMPLCLASS(WMgmtMode, Obj, mgmtmode_deinit, NULL);
+IMPLCLASS(WModal, Obj, modal_deinit, NULL);
 
 
 /*}}}*/
@@ -116,9 +116,9 @@ static void draw_rubberbox(WRootWin *rw, const WRectangle *rect)
 }
 
 
-static void mgmtmode_draw(WMgmtMode *mode)
+static void modal_draw(WModal *mode)
 {
-    WRegion *reg=mgmtmode_selected(mode);
+    WRegion *reg=modal_selected(mode);
 
     if(reg!=NULL){
         WRootWin *rw=region_rootwin_of(reg);
@@ -135,9 +135,9 @@ static void mgmtmode_draw(WMgmtMode *mode)
 }
 
 
-static void mgmtmode_erase(WMgmtMode *mode)
+static void modal_erase(WModal *mode)
 {
-    mgmtmode_draw(mode);
+    modal_draw(mode);
 }
 
 
@@ -147,12 +147,12 @@ static void mgmtmode_erase(WMgmtMode *mode)
 /*{{{ The mode */
 
 
-static bool mgmt_handler(WRegion *reg, XEvent *xev)
+static bool modal_handler(WRegion *reg, XEvent *xev)
 {
     WRegion *mreg=NULL, *sub=NULL, *chld=NULL;
     XKeyEvent *ev=&xev->xkey;
     WBinding *binding=NULL;
-    WMgmtMode *mode;
+    WModal *mode;
 
     if(ev->type==KeyRelease)
         return FALSE;
@@ -160,12 +160,12 @@ static bool mgmt_handler(WRegion *reg, XEvent *xev)
     if(reg==NULL)
         return FALSE;
 
-    mode=mgmt_mode;
+    mode=modal_mode;
 
     if(mode==NULL)
         return FALSE;
 
-    binding=bindmap_lookup_binding(mod_mgmtmode_bindmap,
+    binding=bindmap_lookup_binding(mod_modal_bindmap,
                                    BINDING_KEYPRESS,
                                    ev->state, ev->keycode);
 
@@ -173,7 +173,7 @@ static bool mgmt_handler(WRegion *reg, XEvent *xev)
         return FALSE;
 
     if(binding!=NULL){
-        mgmtmode_erase(mode);
+        modal_erase(mode);
 
         sub = (WRegion*) mode->selw.obj;
         mreg = sub;
@@ -185,21 +185,21 @@ static bool mgmt_handler(WRegion *reg, XEvent *xev)
         }while(mreg!=NULL);
 
         extl_call(binding->func, "ooo", NULL, mode, sub, chld);
-        if(mgmt_mode!=NULL)
-            mgmtmode_draw(mgmt_mode);
+        if(modal_mode!=NULL)
+            modal_draw(modal_mode);
     }
 
-    return (mgmt_mode==NULL);
+    return (modal_mode==NULL);
 }
 
 
-static void cancel_mgmt(WRegion *reg)
+static void cancel_modal(WRegion *reg)
 {
-    if(mgmt_mode!=NULL){
-        mgmtmode_erase(mgmt_mode);
-        destroy_obj((Obj*)mgmt_mode);
+    if(modal_mode!=NULL){
+        modal_erase(modal_mode);
+        destroy_obj((Obj*)modal_mode);
     }
-    ioncore_grab_remove(mgmt_handler);
+    ioncore_grab_remove(modal_handler);
 }
 
 
@@ -207,24 +207,24 @@ static void cancel_mgmt(WRegion *reg)
  * Begin management mode.
  */
 EXTL_EXPORT
-WMgmtMode *mod_mgmtmode_begin(WRegion *reg)
+WModal *mod_modal_begin(WRegion *reg)
 {
-    if(mgmt_mode!=NULL)
+    if(modal_mode!=NULL)
         return NULL;
 
-    mgmt_mode=create_mgmtmode(reg);
+    modal_mode=create_modal(reg);
 
-    if(mgmt_mode==NULL)
+    if(modal_mode==NULL)
         return NULL;
 
     ioncore_grab_establish((WRegion*)region_rootwin_of(reg),
-                           mgmt_handler,
-                           (GrabKilledHandler*)cancel_mgmt, 0,
+                           modal_handler,
+                           (GrabKilledHandler*)cancel_modal, 0,
                            GRAB_DEFAULT_FLAGS);
 
-    mgmtmode_draw(mgmt_mode);
+    modal_draw(modal_mode);
 
-    return mgmt_mode;
+    return modal_mode;
 }
 
 

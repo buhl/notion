@@ -11,12 +11,12 @@ include $(TOPDIR)/build/system-inc.mk
 INCLUDES += $(X11_INCLUDES) $(LIBTU_INCLUDES) $(LIBEXTL_INCLUDES) -I..
 CFLAGS += $(XOPEN_SOURCE) $(C99_SOURCE)
 
-SOURCES=main.c mgmtmode.c
+SOURCES=main.c modal.c
 
-MAKE_EXPORTS=mod_mgmtmode
+MAKE_EXPORTS=mod_modal
 
-MODULE=mod_mgmtmode
-MODULE_STUB=mod_mgmtmode.lua
+MODULE=mod_modal
+MODULE_STUB=mod_modal.lua
 
 ######################################
 
