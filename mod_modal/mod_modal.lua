@@ -8,4 +8,4 @@ end
 package.loaded["mod_modal"]=true
 
 -- Load configuration file
-dopath("cfg_modal", false)
+-- dopath("cfg_modal", false)
